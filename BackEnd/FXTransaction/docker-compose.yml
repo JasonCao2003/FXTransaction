@@ -6,9 +6,9 @@ services:
     container_name: mysql
 #    command: --skip-grant-tables
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: trade_service
-      MYSQL_PASSWORD: 123456
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-trade_service}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       MYSQL_ROOT_HOST: "%"
     ports:
       - "3307:3306"
@@ -51,8 +51,8 @@ services:
   # 服务发现服务
   discovery-service:
     build:
-      context: C:/Users/HP-PC/Desktop/test/discovery-service
-      dockerfile: C:/Users/HP-PC/Desktop/test/discovery-service/discovery-service.Dockerfile
+      context: ./discovery-service
+      dockerfile: ./discovery-service/discovery-service.Dockerfile
     container_name: discovery-service
     ports:
       - "8761:8761"
@@ -64,8 +64,8 @@ services:
   # 配置服务
   config-service:
     build:
-      context: C:\Users\HP-PC\Desktop\test\config-service
-      dockerfile: C:\Users\HP-PC\Desktop\test\config-service\config-service.Dockerfile
+      context: ./config-service
+      dockerfile: ./config-service/config-service.Dockerfile
     container_name: config-service
     ports:
       - "8888:8888"
@@ -75,8 +75,8 @@ services:
   # 网关服务
   gateway-service:
     build:
-      context: C:\Users\HP-PC\Desktop\test\gateway-service
-      dockerfile: C:\Users\HP-PC\Desktop\test\gateway-service\gateway-service.Dockerfile
+      context: ./gateway-service
+      dockerfile: ./gateway-service/gateway-service.Dockerfile
     container_name: gateway-service
     ports:
       - "9002:9002"
@@ -87,8 +87,8 @@ services:
   # 交易服务
   trade-service:
     build:
-      context: C:\Users\HP-PC\Desktop\test\trade-service
-      dockerfile: C:\Users\HP-PC\Desktop\test\trade-service\trade-service.Dockerfile
+      context: ./trade-service
+      dockerfile: ./trade-service/trade-service.Dockerfile
     container_name: trade-service
     ports:
       - "9006:9006"

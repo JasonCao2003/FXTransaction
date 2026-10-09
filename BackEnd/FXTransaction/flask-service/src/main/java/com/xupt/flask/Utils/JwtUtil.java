@@ -2,6 +2,7 @@ package com.xupt.flask.Utils;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
@@ -10,7 +11,15 @@ import java.util.Map;
 
 @Component
 public class JwtUtil {
-    private static final String key = "chaojifeixia";
+    // JWT 签名密钥通过环境变量 JWT_KEY 注入，避免硬编码（默认值仅用于本地开发）
+    private static volatile String key = System.getenv().getOrDefault("JWT_KEY", "fx-dev-secret");
+
+    @Value("${JWT_KEY:fx-dev-secret}")
+    public void setKey(String k) {
+        if (k != null && !k.isEmpty()) {
+            key = k;
+        }
+    }
 
     // 生成 token，加入超时时间
     public static String genToken(Map<String, Object> claims) {

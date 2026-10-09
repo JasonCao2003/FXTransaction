@@ -1,7 +1,7 @@
 const { createProxyMiddleware } = require("http-proxy-middleware");
 
 const matchUrl = "/api"; // 请求是匹配的地址
-const target = "https://z3web.cn/"; // 目标网址
+const target = process.env.REACT_APP_PROXY_TARGET || "https://z3web.cn/"; // 目标网址（可用环境变量覆盖）
 const prevUrl = "^/api"; // 以/api路径截取
 const writeUlr = "/api/react-ant-admin"; // 重写请求路径  
 /**

@@ -4,6 +4,7 @@ import com.alxy.accountservice.Entity.CurrencyHistory;
 import com.alxy.accountservice.Repository.CurrencyHistoryRepository;
 import jakarta.annotation.Resource;
 import jakarta.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -18,22 +19,38 @@ import java.util.*;
 @Service
 public class CurrencyExchangeScheduledTask {
 
-    private static final String LATEST_API_URL = "https://v6.exchangerate-api.com/v6/b262220b718ad78bab3c303f/latest/";
-    private static final String API_URL = "https://v6.exchangerate-api.com/v6/b262220b718ad78bab3c303f/history/{base}/{year}/{month}/{day}";
+    // 汇率数据 API 基础地址与密钥（KEY 通过环境变量注入，避免硬编码）
+    private static final String API_BASE = "https://v6.exchangerate-api.com/v6/";
+    @Value("${EXCHANGE_RATE_API_KEY:}")
+    private String exchangeRateApiKey;
+
     private static final List<String> BASE_CURRENCIES = Arrays.asList("USD", "CNY", "HKD", "EUR");
     private static final List<String> TARGET_CURRENCIES = Arrays.asList("USD", "CNY", "HKD", "EUR");
-    private static final String DB_URL = "jdbc:mysql://localhost:3306/currency_exchange_db";
-    private static final String DB_USER = "root";
-    private static final String DB_PASSWORD = "123456";
+
+    // 汇率服务独立数据库连接（通过环境变量注入）
+    @Value("${CURRENCY_DB_URL:jdbc:mysql://localhost:3306/currency_exchange_db}")
+    private String dbUrl;
+    @Value("${CURRENCY_DB_USER:root}")
+    private String dbUser;
+    @Value("${CURRENCY_DB_PASSWORD:}")
+    private String dbPassword;
     private final RestTemplate restTemplate = new RestTemplate();
     @Resource
     private CurrencyHistoryRepository repository;
+
+    private String latestApiUrl() {
+        return API_BASE + exchangeRateApiKey + "/latest/";
+    }
+
+    private String historyApiUrl() {
+        return API_BASE + exchangeRateApiKey + "/history/{base}/{year}/{month}/{day}";
+    }
 
     // 每日零点执行（通过）
     @Scheduled(cron = "0 0 0 * * ?")
     public void dailyZeroTask() {
         for (String baseCurrency : BASE_CURRENCIES) {
-            String url = LATEST_API_URL + baseCurrency;
+            String url = latestApiUrl() + baseCurrency;
             try {
                 Map<String, Object> response = restTemplate.getForObject(url, HashMap.class);
                 if (response != null && "success".equals(response.get("result"))) {
@@ -71,7 +88,7 @@ public class CurrencyExchangeScheduledTask {
     @Scheduled(cron = "0 30 * * * ?")
     public void hourlyTask() {
         for (String baseCurrency : BASE_CURRENCIES) {
-            String url = LATEST_API_URL + baseCurrency;
+            String url = latestApiUrl() + baseCurrency;
             try {
                 Map<String, Object> response = restTemplate.getForObject(url, HashMap.class);
                 if (response != null && "success".equals(response.get("result"))) {
@@ -109,7 +126,7 @@ public class CurrencyExchangeScheduledTask {
     @Scheduled(cron = "0 59 23 * * ?")
     public void daily2359Task() {
         for (String baseCurrency : BASE_CURRENCIES) {
-            String url = LATEST_API_URL + baseCurrency;
+            String url = latestApiUrl() + baseCurrency;
             try {
                 Map<String, Object> response = restTemplate.getForObject(url, HashMap.class);
                 if (response != null && "success".equals(response.get("result"))) {
@@ -153,7 +170,7 @@ public class CurrencyExchangeScheduledTask {
                 "target_currency = VALUES(target_currency), " +
                 "latest = VALUES(latest), " +
                 "date = VALUES(date)";
-        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+        try (Connection conn = DriverManager.getConnection(dbUrl, dbUser, dbPassword);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, id);
             pstmt.setString(2, baseCurrency);
@@ -170,7 +187,7 @@ public class CurrencyExchangeScheduledTask {
     private void saveToHistory(String baseCurrency, String targetCurrency, BigDecimal exchangeRate) {
         LocalDate date = LocalDate.now();
         String sql = "INSERT INTO currency_exchange_history (exchange_id,base_currency, target_currency, exchange_rate, high, low, open, close, date) VALUES (?,?,?,?,?,?,?,?,?)";
-        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+        try (Connection conn = DriverManager.getConnection(dbUrl, dbUser, dbPassword);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, UUID.randomUUID().toString());
             pstmt.setString(2, baseCurrency);
@@ -193,7 +210,7 @@ public class CurrencyExchangeScheduledTask {
         String selectSql = "SELECT high, low FROM currency_exchange_history WHERE base_currency = ? AND target_currency = ? AND date = ?";
         String updateSql = "UPDATE currency_exchange_history SET high = ?, low = ? WHERE base_currency = ? AND target_currency = ? AND date = ?";
 
-        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
+        try (Connection conn = DriverManager.getConnection(dbUrl, dbUser, dbPassword)) {
             try (PreparedStatement selectPstmt = conn.prepareStatement(selectSql)) {
                 selectPstmt.setString(1, baseCurrency);
                 selectPstmt.setString(2, targetCurrency);
@@ -228,7 +245,7 @@ public class CurrencyExchangeScheduledTask {
     private void updateHistoryClose(String baseCurrency, String targetCurrency, BigDecimal exchangeRate) {
         LocalDate date = LocalDate.now();
         String sql = "UPDATE currency_exchange_history SET close = ? WHERE base_currency = ? AND target_currency = ? AND date = ?";
-        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+        try (Connection conn = DriverManager.getConnection(dbUrl, dbUser, dbPassword);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setBigDecimal(1, exchangeRate);
             pstmt.setString(2, baseCurrency);
@@ -284,7 +301,7 @@ public class CurrencyExchangeScheduledTask {
             uriVars.put("day", String.format("%02d", date.getDayOfMonth()));
 
             try {
-                Map<?, ?> response = restTemplate.getForObject(API_URL, Map.class, uriVars);
+                Map<?, ?> response = restTemplate.getForObject(historyApiUrl(), Map.class, uriVars);
                 if (response != null && "success".equals(response.get("result"))) {
                     Map<String, Object> rates = (Map<String, Object>) response.get("conversion_rates");
 

@@ -75,6 +75,19 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <!-- 所有子模块共用的依赖 -->
+    <dependencies>
+        <!-- .env 文件加载：将敏感配置通过环境变量文件注入，避免硬编码 -->
+        <!-- 若 .env 不在工作目录，可用 -Dspringdotenv.directory=<路径> 或环境变量 SPRINGDOTENV_DIRECTORY 指定 -->
+        <dependency>
+            <groupId>me.paulschwarz</groupId>
+            <artifactId>springboot3-dotenv</artifactId>
+            <version>5.1.0</version>
+            <optional>true</optional>
+        </dependency>
+    </dependencies>
+
     <build>
         <plugins>
             <plugin>

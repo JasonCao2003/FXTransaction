@@ -5,6 +5,7 @@ import com.alxy.authservice.DTO.Result;
 import jakarta.annotation.Resource;
 import jakarta.validation.constraints.Email;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.mail.SimpleMailMessage;
@@ -25,12 +26,16 @@ public class MailUtil {
     @Autowired
     private StringRedisTemplate redisTemplate;
 
+    // 发件人地址取自环境变量 MAIL_USERNAME，避免硬编码
+    @Value("${spring.mail.username:}")
+    private String from;
+
     public void SendMail(String to, String message) {
         SimpleMailMessage mail = new SimpleMailMessage();
         mail.setSubject("【超级飞侠】验证码");
         mail.setText("您本次的验证码为 " + message + "，该验证码5分钟内有效，请勿泄露于他人。");
         mail.setTo(to);
-        mail.setFrom("2764184496@qq.com");
+        mail.setFrom(from);
         System.out.println(mail);
         sender.send(mail);
     }

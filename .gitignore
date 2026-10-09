@@ -1,0 +1,82 @@
+# ============================================================
+# FXTransaction · 外汇交易系统  —  全局 .gitignore
+# ============================================================
+
+# ---------- 操作系统 ----------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ---------- 编辑器 / IDE ----------
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.classpath
+.project
+.factorypath
+.apt_generated
+.springBeans
+.sts4-cache
+*.suo
+*.sw?
+.history/
+
+# ---------- Java (Spring Boot / Maven) ----------
+target/
+build/
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+!.mvn/wrapper/maven-wrapper.jar
+!.mvn/wrapper/maven-wrapper.properties
+hs_err_pid*
+replay_pid*
+.mtj.tmp/
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# ---------- Node / React 前端 ----------
+node_modules/
+build/
+dist/
+dist-ssr/
+.cache/
+.npm
+.yarn
+.pnp.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.eslintcache
+
+# ---------- 环境变量 / 敏感配置 ----------
+.env
+.env.*
+!.env.example
+!.env-cmdrc.example.json
+*.pem
+*.key
+*.p12
+*secret*
+*credential*
+
+# ⚠️ 说明：数据库口令、JWT 密钥、邮箱授权码、汇率 API Key 等
+# 已统一改用环境变量 / .env 注入，请勿再把真实值写回配置文件。
+
+# ---------- 运行时数据 / 日志 ----------
+logs/
+*.log
+uploads/
+tmp/
